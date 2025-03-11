@@ -17,12 +17,43 @@ LIBRARY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), LIBRARY_
 # Load shared C library safely
 dns_lib = ctypes.CDLL(LIBRARY_PATH)
 
+# Define additional parameter structure
+class AdditionalParam(ctypes.Structure):
+    _fields_ = [
+        ("type", ctypes.c_int),  # Type identifier for the parameter
+        ("data", ctypes.c_ubyte * 32)  # Storage for the parameter data
+    ]
+
+
+# Define PDM Option Structure
+class PDMOption(ctypes.Structure):
+    _fields_ = [
+        ("option_type", ctypes.c_uint8),   # 0x0F (00001111)
+        ("opt_len", ctypes.c_uint8),       # 10 (length excluding type and length fields)
+        ("scale_dtlr", ctypes.c_uint8),    # Scale for Delta Time Last Received
+        ("scale_dtls", ctypes.c_uint8),    # Scale for Delta Time Last Sent
+        ("psntp", ctypes.c_uint16),        # Packet Sequence Number This Packet
+        ("psnlr", ctypes.c_uint16),        # Packet Sequence Number Last Received
+        ("deltatlr", ctypes.c_uint16),     # Delta Time Last Received
+        ("deltatls", ctypes.c_uint16)      # Delta Time Last Sent
+    ]
+
+# Define Destination Option Header Structure
+class DestOptHdr(ctypes.Structure):
+    _fields_ = [
+        ("next_header", ctypes.c_uint8),  # Next header after this extension
+        ("hdr_ext_len", ctypes.c_uint8),  # Header extension length (in 8-octet units)
+        ("options", ctypes.c_uint8 * 14)  # PDM option + padding (14 bytes)
+    ]
+
 # Define DNSResponse struct
 class DNSResponse(ctypes.Structure):
     _fields_ = [
         ("response_size", ctypes.c_int),
-        ("latency_ms", ctypes.c_double),
-        ("response", ctypes.c_ubyte * 512)
+        ("latency_ns", ctypes.c_double),
+        ("response", ctypes.c_ubyte * 512),
+        ("num_additional_params", ctypes.c_int),
+        ("additional_params", ctypes.POINTER(AdditionalParam))
     ]
 
 # Define return and argument types
@@ -32,7 +63,9 @@ dns_lib.query_dns.argtypes = [
     ctypes.c_int, 
     ctypes.POINTER(DNSResponse),
     ctypes.c_int,  # use_ipv6 flag
-    ctypes.c_int   # additional flags (e.g., IPv6 traffic class)
+    ctypes.c_int,  # additional flags (e.g., IPv6 traffic class)
+    # ctypes.POINTER(ctypes.c_int),      # Count of parameters
+    # ctypes.POINTER(AdditionalParam),  # Array of AdditionalParam
 ]
 dns_lib.query_dns.restype = ctypes.c_int
 
@@ -63,7 +96,8 @@ class DNSQuery:
 @dataclass
 class DNSResult:
     response: dns.message.QueryMessage
-    latency_ms: float
+    latency_ns: float
+    additional_params: list
 
 def build_dns_query(
         qname: dns.name.Name | str, 
@@ -125,16 +159,32 @@ def send_dns_query(query: DNSQuery, dns_server: str, extra_flags : DNSFlags = 0)
     extra_flags_ctypes = ctypes.c_int(extra_flags)
 
     response_struct = DNSResponse()
+    response_struct.num_additional_params = 0
     response_size = dns_lib.query_dns(
         dns_server_ctypes,
         request_ctypes,
         request_size,
         ctypes.byref(response_struct),
         use_ipv6_ctypes,
-        extra_flags_ctypes
+        extra_flags_ctypes,
     )
+    additional_params_list = []
+    for i in range(response_struct.num_additional_params):
+        params = response_struct.additional_params[i]
+        if params.type == 59:
+            # Destination Option
+            dstopt = ctypes.cast(params.data, ctypes.POINTER(DestOptHdr)).contents
+
+
+            # Extract PDM Option (first 10 bytes of options)
+            pdm_raw = bytes(dstopt.options[:12])
+            
+            # Cast the extracted bytes into a PDMOption structure
+            pdm_option = PDMOption.from_buffer_copy(pdm_raw)
+            additional_params_list.append(pdm_option)
+
     if response_size > 0:
-        return DNSResult(response=decode_dns_response(bytes(response_struct.response[:response_size])), latency_ms=response_struct.latency_ms)
+        return DNSResult(response=decode_dns_response(bytes(response_struct.response[:response_size])), latency_ns=response_struct.latency_ns, additional_params=additional_params_list)
     else:
         return None
 
