@@ -35,5 +35,5 @@ def ensure_measuredns():
     FLAGS = ["-shared", "-fPIC", '-fno-strict-overflow', '-Wsign-compare', '-DNDEBUG', '-g', '-O2', '-Wall']
 
     # print(f"{LIBRARY_PATH=}")
-    _exec_gcc("gcc", FLAGS, LIBRARY_PATH, SRC_PATH) 
+    return _exec_gcc("gcc", FLAGS, LIBRARY_PATH, SRC_PATH) 
         

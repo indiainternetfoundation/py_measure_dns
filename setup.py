@@ -10,7 +10,7 @@ setup(
     version = '1.0',
     description = 'A python library to measure dns query latency, accurately',
     author = 'Arnav Das',
-    include_package_data=False,
+    # include_package_data=False,
     requires=["wheel", "dnspython"],
     author_email = 'arnav.das88@gmail.com',
     url = 'https://docs.python.org/extending/building',
