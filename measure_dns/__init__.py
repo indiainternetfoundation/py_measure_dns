@@ -82,17 +82,17 @@ class DNSFlags(enum.IntEnum):
 
 @dataclass
 class DNSQuery:
-    qname: dns.name.Name | str
-    rdtype: dns.rdatatype.RdataType | str
-    rdclass: dns.rdataclass.RdataClass | str = RdataClass.IN
-    use_edns: int | bool | None = None
+    qname: typing.Union[dns.name.Name, str]
+    rdtype: typing.Union[dns.rdatatype.RdataType, str]
+    rdclass: typing.Union[dns.rdataclass.RdataClass, str] = RdataClass.IN
+    use_edns: typing.Union[int, bool, None] = None
     want_dnssec: bool = False
-    ednsflags: int | None = None
-    payload: int | None = None
-    request_payload: int | None = None
-    options: typing.List[dns.edns.Option] | None = None
-    idna_codec: dns.name.IDNACodec | None = None
-    id: int | None = None
+    ednsflags: typing.Union[int, None] = None
+    payload: typing.Union[int, None] = None
+    request_payload: typing.Union[int, None] = None
+    options: typing.Union[typing.List[dns.edns.Option], None] = None
+    idna_codec: typing.Union[dns.name.IDNACodec, None] = None
+    id: typing.Union[int, None] = None
     flags: int = 256
     pad: int = 0
 
