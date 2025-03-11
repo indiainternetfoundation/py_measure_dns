@@ -15,8 +15,9 @@ LIBRARY_NAME = "measuredns.so"  # Change to "measuredns.dll" for Windows if need
 LIBRARY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), LIBRARY_NAME)
 
 if not os.path.exists(LIBRARY_PATH):
-    from .ensure_measuredns import ensure_measuredns
-    ensure_measuredns() 
+    from measure_dns.ensure_measuredns import ensure_measuredns
+    print("building `measuredns`", end = " :\t")
+    print( ensure_measuredns() )
 
 # Load shared C library safely
 dns_lib = ctypes.CDLL(LIBRARY_PATH)
