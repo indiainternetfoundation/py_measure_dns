@@ -1,16 +1,12 @@
-import os
-import sys
-from distutils.core import setup, Extension
-
-from distutils.command.build_ext import build_ext
-import subprocess
-import re
+from setuptools import Extension, setup
+from setuptools.command.sdist import sdist as SetuptoolsSdist
 
 # This version string should be updated when releasing a new version.
 _VERSION = '0.0.1'
 
 setup(
-    name = 'measure_dns',
+    name = 'py-measuredns',
+    packages=["measure_dns"],
     version = '1.0',
     description = 'A python library to measure dns query latency, accurately',
     author = 'Arnav Das',
