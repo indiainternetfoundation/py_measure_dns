@@ -10,7 +10,7 @@ import re
 _VERSION = '0.0.1'
 
 setup(
-    name = 'py-measuredns',
+    name = 'measure_dns',
     version = '1.0',
     description = 'A python library to measure dns query latency, accurately',
     author = 'Arnav Das',
