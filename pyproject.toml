@@ -3,7 +3,7 @@ requires = ["setuptools", "cython"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "measure_dns"
+name = "py-measuredns"
 readme = "README.md"
 version="0.0.1"
 authors = [
@@ -11,7 +11,7 @@ authors = [
 ]
 description = "A python library to measure dns query latency, accurately"
 requires-python = ">=3"
-dependencies = ["dnspython"]
+dependencies = ["dnspython", "wheel"]
 classifiers = [
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
