@@ -64,8 +64,6 @@ dns_lib.query_dns.argtypes = [
     ctypes.POINTER(DNSResponse),
     ctypes.c_int,  # use_ipv6 flag
     ctypes.c_int,  # additional flags (e.g., IPv6 traffic class)
-    # ctypes.POINTER(ctypes.c_int),      # Count of parameters
-    # ctypes.POINTER(AdditionalParam),  # Array of AdditionalParam
 ]
 dns_lib.query_dns.restype = ctypes.c_int
 
