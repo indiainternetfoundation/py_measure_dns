@@ -1,4 +1,5 @@
 import os
+import enum
 import ctypes
 import struct
 import typing
@@ -7,6 +8,7 @@ import dns.name
 import dns.rdataclass
 from dns.rdataclass import RdataClass
 from dataclasses import dataclass
+from ipaddress import ip_address, IPv4Address 
 
 # Get the absolute path of the shared library
 LIBRARY_NAME = "measuredns.so"  # Change to "measuredns.dll" for Windows if needed
@@ -28,9 +30,19 @@ dns_lib.query_dns.argtypes = [
     ctypes.c_char_p, 
     ctypes.POINTER(ctypes.c_ubyte), 
     ctypes.c_int, 
-    ctypes.POINTER(DNSResponse)
+    ctypes.POINTER(DNSResponse),
+    ctypes.c_int,  # use_ipv6 flag
+    ctypes.c_int   # additional flags (e.g., IPv6 traffic class)
 ]
 dns_lib.query_dns.restype = ctypes.c_int
+
+class DNSFlags(enum.IntEnum):
+    NoFlag = 0x0000
+    PdmMetric = 0x0001
+    PreResolve4 = 0x0010 # Resolves the DNS Server domain IPv4
+    PreResolve6 = 0x0100 # Resolves the DNS Server domain IPv6
+    # DummyFlagB = 0x1000
+
 
 @dataclass
 class DNSQuery:
@@ -87,7 +99,7 @@ def build_dns_query(
 
     return query.to_wire()
     
-def send_dns_query(query: DNSQuery, dns_server: str) -> DNSResult:
+def send_dns_query(query: DNSQuery, dns_server: str, extra_flags : DNSFlags = 0) -> DNSResult:
     """Sends a DNS query and returns the response along with latency."""
     request = build_dns_query(
         qname = query.qname,
@@ -109,9 +121,18 @@ def send_dns_query(query: DNSQuery, dns_server: str) -> DNSResult:
     request_ctypes = (ctypes.c_ubyte * request_size)(*request)
     dns_server_ctypes = ctypes.c_char_p(dns_server.encode())
 
-    response_struct = DNSResponse()
-    response_size = dns_lib.query_dns(dns_server_ctypes, request_ctypes, request_size, ctypes.byref(response_struct))
+    use_ipv6_ctypes = ctypes.c_int(0 if type(ip_address(dns_server)) is IPv4Address else 1)
+    extra_flags_ctypes = ctypes.c_int(extra_flags)
 
+    response_struct = DNSResponse()
+    response_size = dns_lib.query_dns(
+        dns_server_ctypes,
+        request_ctypes,
+        request_size,
+        ctypes.byref(response_struct),
+        use_ipv6_ctypes,
+        extra_flags_ctypes
+    )
     if response_size > 0:
         return DNSResult(response=decode_dns_response(bytes(response_struct.response[:response_size])), latency_ms=response_struct.latency_ms)
     else:

@@ -12,7 +12,8 @@
             "program": "sample.py",
             // "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": false
+            "justMyCode": false,
+            "sudo": true
         }
     ]
 }
