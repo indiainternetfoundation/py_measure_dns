@@ -1,36 +1,47 @@
 import socket
 from measure_dns import DNSQuery, send_dns_query, DNSFlags
 
+# Function to convert delta time values to nanoseconds based on scale factor
 def _astons(delta, scale):
     ns_time = delta
-    ns_time = int(ns_time) << (scale - 8)
+    ns_time = int(ns_time) << (scale - 8)  # Adjust the time based on the scale factor
 
-    ns_time *= 16*16
+    ns_time *= 16 * 16  # Further conversion to align with PDM metric format
     ns_time /= 10000
     ns_time /= 100000
     return int(ns_time)
 
 if __name__ == "__main__":
+    # Define the domain to be queried
     domain = "testprotocol.in"
-    dns_server = "2406:da1a:8e8:e8cb:97fe:3833:8668:54ad" # ns2.testprotocol.in
-    # dns_server = "65.0.92.216" # ns2.testprotocol.in
-    # dns_server = "13.127.175.92" # ns1.testprotocol.in
+    
+    # Define the DNS server to query (IPv6 addresses of authoritative nameservers)
+    dns_server = "2406:da1a:8e8:e863:ab7a:cb7e:2cf9:dc78"  # ns1.testprotocol.in
+    # Other available nameservers (commented out)
+    # dns_server = "2406:da1a:8e8:e8cb:97fe:3833:8668:54ad" # ns2.testprotocol.in
+    # dns_server = "2406:da18:c78:2b8:a93c:708c:4fc7:f75d" # ns3.testprotocol.in
+    # dns_server = "2406:da18:c78:219:22a5:8271:5f0d:780b" # ns4.testprotocol.in
+    # dns_server = "65.0.92.216" # ns2.testprotocol.in (IPv4)
+    # dns_server = "13.127.175.92" # ns1.testprotocol.in (IPv4)
 
+    # Send a DNS query to the specified server, requesting an A record
     result = send_dns_query(
-        DNSQuery(qname=domain, rdtype="A"),
+        DNSQuery(qname=domain, rdtype="A"),  # Querying A record for domain
         dns_server,
-        DNSFlags.PdmMetric
+        DNSFlags.PdmMetric  # Requesting PDM (Performance Diagnostic Metrics) option
     )
 
+    # Check if a response was received
     if result:
-        print(f"Latency: {result.latency_ns} ns")
-        print(result.response.answer)
+        print(f"Latency: {result.latency_ns} ns")  # Print query response latency
+        print(result.response.answer)  # Print DNS response
     else:
-        print("Failed to get a response.")
+        print("Failed to get a response.")  # Indicate query failure
     
+    # Process additional DNS parameters if PDM option is present
     if result.additional_params:
         for option in result.additional_params:
-            if option.option_type == 15:
+            if option.option_type == 15:  # PDM option identifier
                 pdm_option = option
                 print()
                 print(f"PDM Option Type: 0x{pdm_option.option_type:02x} ({pdm_option.option_type})")
@@ -42,7 +53,9 @@ if __name__ == "__main__":
                 print(f"Scale DTLR: 0x{pdm_option.scale_dtlr:02x} ({pdm_option.scale_dtlr})")
                 print(f"Scale DTLS: 0x{pdm_option.scale_dtls:02x} ({pdm_option.scale_dtls})")
                 print()
-                print("rtt: ", result.latency_ns)
-                print("server latency: ", _astons(pdm_option.deltatlr, pdm_option.scale_dtlr))
-                print("network latency: ", result.latency_ns - _astons(pdm_option.deltatlr, pdm_option.scale_dtlr))
-
+                
+                # Calculate and display latency breakdown
+                print("rtt: ", result.latency_ns)  # Total round-trip time (RTT)
+                server_latency = _astons(pdm_option.deltatlr, pdm_option.scale_dtlr)
+                print("server latency: ", server_latency)  # Estimated server processing latency
+                print("network latency: ", result.latency_ns - server_latency)  # Estimated network latency
