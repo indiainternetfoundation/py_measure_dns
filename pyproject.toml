@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools", "cython"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "py-measuredns"
+readme = "README.md"
+version="0.0.1"
+authors = [
+  { name="Arnav Das", email="arnav.das88@gmail.com" },
+]
+description = "A python library to measure dns query latency, accurately"
+requires-python = ">=3"
+dependencies = ["dnspython"]
+classifiers = [
+        "Development Status :: 5 - Production/Stable",
+        "Environment :: Console",
+        "Environment :: No Input/Output (Daemon)",
+        "Intended Audience :: Developers",
+        "Intended Audience :: System Administrators",
+        "License :: OSI Approved :: GNU AFFERO",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/arnavdas88/py_measure_dns"
+"Bug Tracker" = "https://github.com/arnavdas88/py_measure_dns/issues"
