@@ -1,7 +1,7 @@
 import os
 
 # Get the absolute path of the shared library
-SRC_NAME = "measuredns.c.py"
+SRC_NAME = "measuredns.c"
 SRC_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), SRC_NAME)
 
 LIBRARY_NAME = "measuredns.so"  # Change to "measuredns.dll" for Windows if needed
