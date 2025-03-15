@@ -1,4 +1,5 @@
 # py_measure_dns
+A Library for Enhanced DNS Measurement
 
 `measure_dns` is a Python package designed for precise measurement of DNS query times. Unlike traditional Python-based DNS measurement tools, which suffer from timing inaccuracies due to high-level language overhead, `measure_dns` leverages a C-based core for improved accuracy. It also supports Performance Diagnostic Metrics (PDM) to extract detailed latency breakdowns, making it useful for network performance analysis.
 
@@ -14,6 +15,24 @@
 
 ## Installation
 
+`measure_dns` requires `gcc` to compile the C components. Ensure you have `gcc` installed before proceeding.
+
+### Install gcc
+
+On Debian/Ubuntu:
+
+```bash
+$ sudo apt update && sudo apt install gcc -y
+```
+
+On macOS (via Homebrew):
+
+```bash
+$ brew install gcc
+```
+
+### Install measure_dns
+
 Currently, `measure_dns` is not available on PyPI and must be installed from GitHub:
 ```bash
 $ pip install git+https://github.com/arnavdas88/py_measure_dns
@@ -26,7 +45,6 @@ $ pip install git+https://github.com/arnavdas88/py_measure_dns
 ### Example: Measuring DNS Query Time
 
 ```python
-import socket
 from measure_dns import DNSQuery, send_dns_query, DNSFlags
 
 # Define the domain to be queried
@@ -37,7 +55,7 @@ dns_server = "2406:da1a:8e8:e863:ab7a:cb7e:2cf9:dc78"
 
 # DNS Query in dnspython format
 query = DNSQuery(qname=qname, rdtype="A")
-    
+
 # Send a DNS query to the specified server, requesting an A record
 result = send_dns_query(
     query,
@@ -69,17 +87,6 @@ result = send_dns_query(
 ```
 
 4. The result includes the response data along with precise latency information.
-
----
-
-## Supported Record Types
-The package supports querying standard DNS record types, including:
-- **A (IPv4 Address)**
-- **AAAA (IPv6 Address)**
-- **CNAME (Canonical Name)**
-- **MX (Mail Exchange)**
-- **TXT (Text Record)**
-- **NS (Name Server)**
 
 ---
 
