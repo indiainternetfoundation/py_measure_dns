@@ -35,7 +35,7 @@ $ brew install gcc
 
 Currently, `measure_dns` is not available on PyPI and must be installed from GitHub:
 ```bash
-$ pip install git+https://github.com/arnavdas88/py_measure_dns
+$ pip install git+https://github.com/indiainternetfoundation/py_measure_dns
 ```
 
 ---
