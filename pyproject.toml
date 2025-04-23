@@ -28,19 +28,26 @@ all = [
     "dnspython", 
     "wheel",
     "pytest",
+    "black",
+    "isort",
     "mkdocs", 
     "mkdocs-material",
+    "mkdocstrings[python]",
 ]
 develop = [
     "dnspython", 
     "pytest",
+    "black",
+    "isort",
     "mkdocs", 
     "mkdocs-material",
+    "mkdocstrings[python]",
 ]
 doc = [
     "dnspython", 
     "mkdocs", 
     "mkdocs-material",
+    "mkdocstrings[python]",
 ]
 
 [project.urls]
