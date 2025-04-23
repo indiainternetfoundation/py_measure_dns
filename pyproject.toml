@@ -23,6 +23,33 @@ classifiers = [
         "Programming Language :: Python :: 3",
 ]
 
+[project.optional-dependencies]
+all = [
+    "dnspython", 
+    "wheel",
+    "pytest",
+    "mkdocs", 
+    "mkdocs-material",
+]
+develop = [
+    "dnspython", 
+    "pytest",
+    "mkdocs", 
+    "mkdocs-material",
+]
+doc = [
+    "dnspython", 
+    "mkdocs", 
+    "mkdocs-material",
+]
+
 [project.urls]
-"Homepage" = "https://github.com/arnavdas88/py_measure_dns"
-"Bug Tracker" = "https://github.com/arnavdas88/py_measure_dns/issues"
+"Homepage" = "https://github.com/indiainternetfoundation/py_measure_dns"
+"Bug Tracker" = "https://github.com/indiainternetfoundation/py_measure_dns/issues"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests"
+]
