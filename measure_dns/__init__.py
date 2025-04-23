@@ -99,7 +99,10 @@ class DNSResponse(ctypes.Structure):
         ("additional_params", ctypes.POINTER(AdditionalParam))
     ]
 
-# Define return and argument types
+# Configure argument and return types of the native query_dns function
+# Ensures safe interoperation between Python and C
+# Signature:
+#   int query_dns(char*, uint8_t*, int, DNSResponse*, int, int);
 dns_lib.query_dns.argtypes = [
     ctypes.c_char_p, 
     ctypes.POINTER(ctypes.c_ubyte), 
@@ -112,13 +115,24 @@ dns_lib.query_dns.restype = ctypes.c_int
 
 class DNSFlags(enum.IntEnum):
     """
-    Flags used to modify behavior of the DNS query.
+    DNSFlags represent bitmask values to control extended DNS query behaviors.
+
+    These flags are passed into the native `measuredns` C library to enable additional
+    metrics collection, pre-resolution of DNS server addresses, or inclusion of PDM metrics.
 
     Attributes:
-        NoFlag: Default, no special behavior.
-        PdmMetric: Enables collection of PDM metrics.
-        PreResolve4: Forces pre-resolution of DNS server using IPv4.
-        PreResolve6: Forces pre-resolution of DNS server using IPv6.
+        NoFlag (int): No additional behavior.
+        PdmMetric (int): Include Performance Diagnostic Metrics (PDM) in the query.
+        PreResolve4 (int): Resolve the DNS server domain to an IPv4 address before querying.
+        PreResolve6 (int): Resolve the DNS server domain to an IPv6 address before querying.
+
+    Example:
+        >>> flags = DNSFlags.PdmMetric | DNSFlags.PreResolve4
+        >>> print(flags)
+        17
+
+    Note:
+        These are internal flags for the C-extension layer and not part of the standard DNS protocol.
     """
     NoFlag = 0x0000
     PdmMetric = 0x0001
@@ -126,11 +140,15 @@ class DNSFlags(enum.IntEnum):
     PreResolve6 = 0x0100 # Resolves the DNS Server domain IPv6
     # DummyFlagB = 0x1000
 
-
 @dataclass
 class DNSQuery:
     """
-    Encapsulates a DNS query with configurable parameters.
+    Represents a full specification of a DNS query object, including all 
+    customization knobs.
+
+    This structure wraps everything needed to construct a complete query,
+    including EDNS options, flags, and DNSSEC capabilities. This object 
+    can be passed to `send_dns_query` for low-level querying.
 
     Attributes:
         qname (str or Name): The query name.
@@ -146,6 +164,9 @@ class DNSQuery:
         id (int): Query ID.
         flags (int): DNS flags field (default 256).
         pad (int): Padding bytes for EDNS0.
+
+    Example:
+        DNSQuery(qname="example.com", rdtype="A", want_dnssec=True)
     """
     qname: typing.Union[dns.name.Name, str]
     rdtype: typing.Union[dns.rdatatype.RdataType, str]
@@ -164,7 +185,8 @@ class DNSQuery:
 @dataclass
 class DNSResult:
     """
-    Represents the parsed result of a DNS query.
+    Represents the parsed result of a DNS query. Encapsulates the result 
+    of a DNS query made using the native C-extension
 
     Attributes:
         response (dns.message.Message): Decoded DNS response.
@@ -193,6 +215,10 @@ def build_dns_query(
     """
     Builds a raw DNS query packet using dnspython.
 
+    Constructs a raw binary DNS query packet using `dnspython`. This function 
+    supports advanced EDNS options and is suitable for precise control over 
+    the query wire format.
+
     Args:
         qname: Query name.
         rdtype: Record type (A, AAAA, etc.).
@@ -210,6 +236,14 @@ def build_dns_query(
 
     Returns:
         bytes: Raw wire-format DNS query.
+
+    Example:
+        >>> wire = build_dns_query("example.com", "A")
+        >>> len(wire)
+        29
+
+    Note:
+        This function does not send the query; it only serializes it.
     """
     query = dns.message.make_query(
         qname = qname,
@@ -233,13 +267,28 @@ def send_dns_query(query: DNSQuery, dns_server: str, extra_flags : DNSFlags = 0)
     """
     Sends a DNS query to the specified server and returns the response.
 
+    Sends a DNS query using the native `measuredns` C extension and collects response metrics. It 
+    uses `build_dns_query` to generate the wire format. converts the query into a C-compatible 
+    format via `ctypes`. Then calls the `query_dns` function from the compiled shared object.
+    It then extracts latency and any additional diagnostics (e.g., PDM) and parses the binary 
+    response back into a `dns.message.QueryMessage`.
+
     Args:
         query (DNSQuery): The DNS query to send.
         dns_server (str): The target DNS server IP or hostname.
-        extra_flags (DNSFlags): Optional flags modifying behavior.
+        extra_flags (DNSFlags): Additional control flags (e.g., for metrics or pre-resolve).
 
     Returns:
         DNSResult: Decoded DNS response, latency, and any additional parameters.
+    
+    Example:
+        >>> query = DNSQuery(qname="example.com", rdtype="A")
+        >>> result = send_dns_query(query, "1.1.1.1", DNSFlags.PdmMetric)
+        >>> print(result.latency_ns)
+        56238.0
+
+    Note:
+        This function may return `None` if the native C-layer call fails.
     """
     request = build_dns_query(
         qname = query.qname,
@@ -303,6 +352,14 @@ def decode_dns_response(response_bytes) -> dns.message.QueryMessage:
 
     Returns:
         QueryMessage: Parsed DNS response.
+    
+    Example:
+        >>> resp = decode_dns_response(wire_response)
+        >>> print(resp.answer)
+        [<DNS answer RRset example.com. IN A 93.184.216.34>]
+
+    Note:
+        If parsing fails, a dictionary with the error message is returned.
     """
     try:
         message = dns.message.from_wire(response_bytes)
