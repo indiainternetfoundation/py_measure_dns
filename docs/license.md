@@ -27,6 +27,6 @@ The precise terms and conditions for copying, distribution and modification foll
     - **Disclose Source**: If you distribute the software, you must also provide access to the source code.
     - **Include License**: You must include the GPL-3 license along with the software.
     - **Include Copyright**: You must include the original copyright notice.
-    - **Include Install Restrictions**: You must include the build and install instructions, as well as any other relevant restrictions.
+    - **Include Install Instructions**: You must include the build and install instructions, as well as any other relevant instructions.
 
 This license ensures that the software remains free and open for modification and redistribution, with the same freedoms preserved for all users.
