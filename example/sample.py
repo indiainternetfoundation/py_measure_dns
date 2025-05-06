@@ -1,5 +1,7 @@
 import socket
-from measure_dns import DNSQuery, send_dns_query, DNSFlags
+
+from measure_dns import DNSFlags, DNSQuery, send_dns_query
+
 
 # Function to convert delta time values to nanoseconds based on scale factor
 def _astons(delta, scale):
@@ -11,10 +13,11 @@ def _astons(delta, scale):
     ns_time /= 100000
     return int(ns_time)
 
+
 if __name__ == "__main__":
     # Define the domain to be queried
     domain = "testprotocol.in"
-    
+
     # Define the DNS server to query (IPv6 addresses of authoritative nameservers)
     dns_server = "2406:da1a:8e8:e863:ab7a:cb7e:2cf9:dc78"  # ns1.testprotocol.in
     # Other available nameservers (commented out)
@@ -28,7 +31,7 @@ if __name__ == "__main__":
     result = send_dns_query(
         DNSQuery(qname=domain, rdtype="A"),  # Querying A record for domain
         dns_server,
-        DNSFlags.PdmMetric  # Requesting PDM (Performance Diagnostic Metrics) option
+        DNSFlags.PdmMetric,  # Requesting PDM (Performance Diagnostic Metrics) option
     )
 
     # Check if a response was received
@@ -37,25 +40,35 @@ if __name__ == "__main__":
         print(result.response.answer)  # Print DNS response
     else:
         print("Failed to get a response.")  # Indicate query failure
-    
+
     # Process additional DNS parameters if PDM option is present
     if result.additional_params:
         for option in result.additional_params:
             if option.option_type == 15:  # PDM option identifier
                 pdm_option = option
                 print()
-                print(f"PDM Option Type: 0x{pdm_option.option_type:02x} ({pdm_option.option_type})")
+                print(
+                    f"PDM Option Type: 0x{pdm_option.option_type:02x} ({pdm_option.option_type})"
+                )
                 print(f"PDM Opt Len: 0x{pdm_option.opt_len:02x} ({pdm_option.opt_len})")
                 print(f"PSNTP: 0x{pdm_option.psntp:02x} ({pdm_option.psntp})")
                 print(f"PSNLR: 0x{pdm_option.psnlr:02x} ({pdm_option.psnlr})")
                 print(f"DeltaTLR: 0x{pdm_option.deltatlr:02x} ({pdm_option.deltatlr})")
                 print(f"DeltaTLS: 0x{pdm_option.deltatls:02x} ({pdm_option.deltatls})")
-                print(f"Scale DTLR: 0x{pdm_option.scale_dtlr:02x} ({pdm_option.scale_dtlr})")
-                print(f"Scale DTLS: 0x{pdm_option.scale_dtls:02x} ({pdm_option.scale_dtls})")
+                print(
+                    f"Scale DTLR: 0x{pdm_option.scale_dtlr:02x} ({pdm_option.scale_dtlr})"
+                )
+                print(
+                    f"Scale DTLS: 0x{pdm_option.scale_dtls:02x} ({pdm_option.scale_dtls})"
+                )
                 print()
-                
+
                 # Calculate and display latency breakdown
                 print("rtt: ", result.latency_ns)  # Total round-trip time (RTT)
                 server_latency = _astons(pdm_option.deltatlr, pdm_option.scale_dtlr)
-                print("server latency: ", server_latency)  # Estimated server processing latency
-                print("network latency: ", result.latency_ns - server_latency)  # Estimated network latency
+                print(
+                    "server latency: ", server_latency
+                )  # Estimated server processing latency
+                print(
+                    "network latency: ", result.latency_ns - server_latency
+                )  # Estimated network latency
