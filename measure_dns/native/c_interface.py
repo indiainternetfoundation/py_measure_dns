@@ -3,7 +3,8 @@ import os
 
 # Get the absolute path of the shared library
 LIBRARY_NAME = "measuredns.so"  # Change to "measuredns.dll" for Windows if needed
-LIBRARY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'compiler', LIBRARY_NAME)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # goes up from 'native'
+LIBRARY_PATH = os.path.join(BASE_DIR, 'compiler', LIBRARY_NAME)
 
 if not os.path.exists(LIBRARY_PATH):
     from measure_dns.compiler.ensure_measuredns import ensure_measuredns

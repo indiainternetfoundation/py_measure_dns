@@ -8,7 +8,7 @@ import dns.message
 import dns.name
 import dns.rdataclass
 from dns.rdataclass import RdataClass
-from native import dns_lib, DNSResponse, AdditionalParam, PDMOption, DestOptHdr
+from .native import dns_lib, DNSResponse, AdditionalParam, PDMOption, DestOptHdr
 class DNSFlags(enum.IntEnum):
     """
     DNSFlags represent bitmask values to control extended DNS query behaviors.

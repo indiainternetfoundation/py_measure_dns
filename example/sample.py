@@ -1,7 +1,6 @@
 import socket
 
-from measure_dns import DNSFlags, DNSQuery
-from measure_dns import send_dns_query
+from measure_dns import DNSQuery, send_dns_query, DNSFlags
 
 # Function to convert delta time values to nanoseconds based on scale factor
 def _astons(delta, scale):

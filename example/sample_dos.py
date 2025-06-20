@@ -1,7 +1,6 @@
 import random
 
-from measure_dns import DNSFlags, DNSQuery
-from measure_dns import send_dns_query
+from measure_dns import DNSQuery, send_dns_query, DNSFlags
 if __name__ == "__main__":
     N = 1000
 
