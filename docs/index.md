@@ -86,7 +86,6 @@ result = send_dns_query(
 ```
 4. The result includes the response data along with precise latency information.
 
-
 ## Documentation
 Detailed documentation is available for the core components of `measure_dns`:
 

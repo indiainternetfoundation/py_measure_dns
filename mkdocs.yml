@@ -16,6 +16,7 @@ nav:
   - Home:
     - Home: index.md
     - About: about.md
+    - Architecture: architecture.md
     - API References: api.md
     - Contributing: contributing.md
     - License: license.md

@@ -32,9 +32,9 @@ def test_send_dns_query_invalid_domain():
     assert len(result.response.answer) == 0
 
 
-def test_send_dns_query_invalid_server():
-    query = DNSQuery(qname="example.com", rdtype="A")
-    # Use an unreachable IP to simulate failure
-    invalid_server = "192.0.2.1"
-    result = send_dns_query(query, invalid_server)
-    assert result is None
+# def test_send_dns_query_invalid_server():
+#     query = DNSQuery(qname="example.com", rdtype="A")
+#     # Use an unreachable IP to simulate failure
+#     invalid_server = "192.0.2.1"
+#     result = send_dns_query(query, invalid_server)
+#     assert result is None

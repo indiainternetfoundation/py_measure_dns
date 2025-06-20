@@ -1,129 +1,14 @@
 import ctypes
 import enum
-import os
 import struct
 import typing
 from dataclasses import dataclass
 from ipaddress import IPv4Address, ip_address
-
 import dns.message
 import dns.name
 import dns.rdataclass
 from dns.rdataclass import RdataClass
-
-# Get the absolute path of the shared library
-LIBRARY_NAME = "measuredns.so"  # Change to "measuredns.dll" for Windows if needed
-LIBRARY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), LIBRARY_NAME)
-
-if not os.path.exists(LIBRARY_PATH):
-    from measure_dns.ensure_measuredns import ensure_measuredns
-
-    print("building `measuredns`", end=" :\t")
-    print(ensure_measuredns())
-
-# Load shared C library safely
-dns_lib = ctypes.CDLL(LIBRARY_PATH)
-
-
-# Define additional parameter structure
-class AdditionalParam(ctypes.Structure):
-    """
-    Represents an additional parameter returned by the measuredns C library.
-
-    Attributes:
-        type (int): Identifier indicating the type of the additional parameter.
-        data (bytes): Raw binary data associated with the parameter (max 32 bytes).
-    """
-
-    _fields_ = [
-        ("type", ctypes.c_int),  # Type identifier for the parameter
-        ("data", ctypes.c_ubyte * 32),  # Storage for the parameter data
-    ]
-
-
-# Define PDM Option Structure
-class PDMOption(ctypes.Structure):
-    """
-    Represents the Performance and Diagnostic Metrics (PDM) option structure.
-
-    Attributes:
-        option_type (int): Type identifier for the option (usually 0x0F).
-        opt_len (int): Length of the option data.
-        scale_dtlr (int): Scaling factor for delta time last received.
-        scale_dtls (int): Scaling factor for delta time last sent.
-        psntp (int): Packet sequence number of this packet.
-        psnlr (int): Packet sequence number last received.
-        deltatlr (int): Delta time last received.
-        deltatls (int): Delta time last sent.
-    """
-
-    _fields_ = [
-        ("option_type", ctypes.c_uint8),  # 0x0F (00001111)
-        ("opt_len", ctypes.c_uint8),  # 10 (length excluding type and length fields)
-        ("scale_dtlr", ctypes.c_uint8),  # Scale for Delta Time Last Received
-        ("scale_dtls", ctypes.c_uint8),  # Scale for Delta Time Last Sent
-        ("psntp", ctypes.c_uint16),  # Packet Sequence Number This Packet
-        ("psnlr", ctypes.c_uint16),  # Packet Sequence Number Last Received
-        ("deltatlr", ctypes.c_uint16),  # Delta Time Last Received
-        ("deltatls", ctypes.c_uint16),  # Delta Time Last Sent
-    ]
-
-
-# Define Destination Option Header Structure
-class DestOptHdr(ctypes.Structure):
-    """
-    Represents an IPv6 Destination Option Header.
-
-    Attributes:
-        next_header (int): Indicates the next header type.
-        hdr_ext_len (int): Header extension length in 8-octet units.
-        options (bytes): Raw option data (typically includes PDM option).
-    """
-
-    _fields_ = [
-        ("next_header", ctypes.c_uint8),  # Next header after this extension
-        ("hdr_ext_len", ctypes.c_uint8),  # Header extension length (in 8-octet units)
-        ("options", ctypes.c_uint8 * 14),  # PDM option + padding (14 bytes)
-    ]
-
-
-# Define DNSResponse struct
-class DNSResponse(ctypes.Structure):
-    """
-    Represents the raw DNS response returned from the C library.
-
-    Attributes:
-        response_size (int): Size of the DNS response in bytes.
-        latency_ns (float): Latency of the DNS request in nanoseconds.
-        response (bytes): Raw DNS response (max 512 bytes).
-        num_additional_params (int): Number of additional diagnostic parameters returned.
-        additional_params (pointer): Pointer to the array of AdditionalParam.
-    """
-
-    _fields_ = [
-        ("response_size", ctypes.c_int),
-        ("latency_ns", ctypes.c_double),
-        ("response", ctypes.c_ubyte * 512),
-        ("num_additional_params", ctypes.c_int),
-        ("additional_params", ctypes.POINTER(AdditionalParam)),
-    ]
-
-
-# Configure argument and return types of the native query_dns function
-# Ensures safe interoperation between Python and C
-# Signature:
-#   int query_dns(char*, uint8_t*, int, DNSResponse*, int, int);
-dns_lib.query_dns.argtypes = [
-    ctypes.c_char_p,
-    ctypes.POINTER(ctypes.c_ubyte),
-    ctypes.c_int,
-    ctypes.POINTER(DNSResponse),
-    ctypes.c_int,  # use_ipv6 flag
-    ctypes.c_int,  # additional flags (e.g., IPv6 traffic class)
-]
-dns_lib.query_dns.restype = ctypes.c_int
-
-
+from native import dns_lib, DNSResponse, AdditionalParam, PDMOption, DestOptHdr
 class DNSFlags(enum.IntEnum):
     """
     DNSFlags represent bitmask values to control extended DNS query behaviors.
@@ -220,75 +105,6 @@ class DNSResult:
     response: dns.message.QueryMessage
     latency_ns: float
     additional_params: list
-
-
-def build_dns_query(
-    qname: typing.Union[dns.name.Name, str],
-    rdtype: typing.Union[dns.rdatatype.RdataType, str],
-    rdclass: typing.Union[dns.rdataclass.RdataClass, str] = RdataClass.IN,
-    use_edns: typing.Union[int, bool, None] = None,
-    want_dnssec: bool = False,
-    ednsflags: typing.Union[int, None] = None,
-    payload: typing.Union[int, None] = None,
-    request_payload: typing.Union[int, None] = None,
-    options: typing.Union[typing.List[dns.edns.Option], None] = None,
-    idna_codec: typing.Union[dns.name.IDNACodec, None] = None,
-    id: typing.Union[int, None] = None,
-    flags: int = 256,
-    pad: int = 0,
-) -> bytes:
-    """
-    Builds a raw DNS query packet using dnspython.
-
-    Constructs a raw binary DNS query packet using `dnspython`. This function
-    supports advanced EDNS options and is suitable for precise control over
-    the query wire format.
-
-    Args:
-        qname: Query name.
-        rdtype: Record type (A, AAAA, etc.).
-        rdclass: Record class.
-        use_edns: Whether to use EDNS.
-        want_dnssec: Request DNSSEC.
-        ednsflags: EDNS-specific flags.
-        payload: Payload size.
-        request_payload: Requested payload size.
-        options: EDNS options.
-        idna_codec: IDNA codec for qname.
-        id: Query ID.
-        flags: DNS flags.
-        pad: Padding bytes.
-
-    Returns:
-        bytes: Raw wire-format DNS query.
-
-    Example:
-        ```py
-        from measure_dns import build_dns_query
-        wire = build_dns_query("example.com", "A")
-        print(wire)
-        ```
-
-    Note:
-        This function does not send the query; it only serializes it.
-    """
-    query = dns.message.make_query(
-        qname=qname,
-        rdtype=rdtype,
-        rdclass=rdclass,
-        use_edns=use_edns,
-        want_dnssec=want_dnssec,
-        ednsflags=ednsflags,
-        payload=payload,
-        request_payload=request_payload,
-        options=options,
-        idna_codec=idna_codec,
-        id=id,
-        flags=flags,
-        pad=pad,
-    )
-
-    return query.to_wire()
 
 
 def send_dns_query(
@@ -410,3 +226,72 @@ def decode_dns_response(response_bytes) -> dns.message.QueryMessage:
 
     except Exception as e:
         return {"error": f"Failed to decode response: {e}"}
+
+
+def build_dns_query(
+    qname: typing.Union[dns.name.Name, str],
+    rdtype: typing.Union[dns.rdatatype.RdataType, str],
+    rdclass: typing.Union[dns.rdataclass.RdataClass, str] = RdataClass.IN,
+    use_edns: typing.Union[int, bool, None] = None,
+    want_dnssec: bool = False,
+    ednsflags: typing.Union[int, None] = None,
+    payload: typing.Union[int, None] = None,
+    request_payload: typing.Union[int, None] = None,
+    options: typing.Union[typing.List[dns.edns.Option], None] = None,
+    idna_codec: typing.Union[dns.name.IDNACodec, None] = None,
+    id: typing.Union[int, None] = None,
+    flags: int = 256,
+    pad: int = 0,
+) -> bytes:
+    """
+    Builds a raw DNS query packet using dnspython.
+
+    Constructs a raw binary DNS query packet using `dnspython`. This function
+    supports advanced EDNS options and is suitable for precise control over
+    the query wire format.
+
+    Args:
+        qname: Query name.
+        rdtype: Record type (A, AAAA, etc.).
+        rdclass: Record class.
+        use_edns: Whether to use EDNS.
+        want_dnssec: Request DNSSEC.
+        ednsflags: EDNS-specific flags.
+        payload: Payload size.
+        request_payload: Requested payload size.
+        options: EDNS options.
+        idna_codec: IDNA codec for qname.
+        id: Query ID.
+        flags: DNS flags.
+        pad: Padding bytes.
+
+    Returns:
+        bytes: Raw wire-format DNS query.
+
+    Example:
+        ```py
+        from measure_dns import build_dns_query
+        wire = build_dns_query("example.com", "A")
+        print(wire)
+        ```
+
+    Note:
+        This function does not send the query; it only serializes it.
+    """
+    query = dns.message.make_query(
+        qname=qname,
+        rdtype=rdtype,
+        rdclass=rdclass,
+        use_edns=use_edns,
+        want_dnssec=want_dnssec,
+        ednsflags=ednsflags,
+        payload=payload,
+        request_payload=request_payload,
+        options=options,
+        idna_codec=idna_codec,
+        id=id,
+        flags=flags,
+        pad=pad,
+    )
+
+    return query.to_wire()

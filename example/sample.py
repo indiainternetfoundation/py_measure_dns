@@ -1,13 +1,12 @@
 import socket
 
-from measure_dns import DNSFlags, DNSQuery, send_dns_query
-
+from measure_dns import DNSFlags, DNSQuery
+from measure_dns import send_dns_query
 
 # Function to convert delta time values to nanoseconds based on scale factor
 def _astons(delta, scale):
     ns_time = delta
     ns_time = int(ns_time) << (scale - 8)  # Adjust the time based on the scale factor
-
     ns_time *= 16 * 16  # Further conversion to align with PDM metric format
     ns_time /= 10000
     ns_time /= 100000
@@ -19,7 +18,7 @@ if __name__ == "__main__":
     domain = "testprotocol.in"
 
     # Define the DNS server to query (IPv6 addresses of authoritative nameservers)
-    dns_server = "2406:da1a:8e8:e863:ab7a:cb7e:2cf9:dc78"  # ns1.testprotocol.in
+    dns_server = "13.127.175.92"  # ns1.testprotocol.in
     # Other available nameservers (commented out)
     # dns_server = "2406:da1a:8e8:e8cb:97fe:3833:8668:54ad" # ns2.testprotocol.in
     # dns_server = "2406:da18:c78:2b8:a93c:708c:4fc7:f75d" # ns3.testprotocol.in
@@ -30,8 +29,8 @@ if __name__ == "__main__":
     # Send a DNS query to the specified server, requesting an A record
     result = send_dns_query(
         DNSQuery(qname=domain, rdtype="A"),  # Querying A record for domain
-        dns_server,
-        DNSFlags.PdmMetric,  # Requesting PDM (Performance Diagnostic Metrics) option
+        dns_server
+        # DNSFlags.PdmMetric,  # Requesting PDM (Performance Diagnostic Metrics) option
     )
 
     # Check if a response was received
