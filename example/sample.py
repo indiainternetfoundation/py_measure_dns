@@ -1,4 +1,5 @@
 import socket
+import dns
 
 from measure_dns import DNSQuery, send_dns_query, DNSFlags
 
@@ -14,30 +15,36 @@ def _astons(delta, scale):
 
 if __name__ == "__main__":
     # Define the domain to be queried
-    domain = "testprotocol.in"
+    domain = "cloudflare.in"
 
     # Define the DNS server to query (IPv6 addresses of authoritative nameservers)
-    dns_server = "13.127.175.92"  # ns1.testprotocol.in
+    # dns_server = "13.127.175.92"  # ns1.testprotocol.in
     # Other available nameservers (commented out)
     # dns_server = "2406:da1a:8e8:e8cb:97fe:3833:8668:54ad" # ns2.testprotocol.in
     # dns_server = "2406:da18:c78:2b8:a93c:708c:4fc7:f75d" # ns3.testprotocol.in
     # dns_server = "2406:da18:c78:219:22a5:8271:5f0d:780b" # ns4.testprotocol.in
     # dns_server = "65.0.92.216" # ns2.testprotocol.in (IPv4)
-    # dns_server = "13.127.175.92" # ns1.testprotocol.in (IPv4)
+    dns_server = "8.8.8.8" # ns1.testprotocol.in (IPv4)
 
     # Send a DNS query to the specified server, requesting an A record
     result = send_dns_query(
-        DNSQuery(qname=domain, rdtype="A"),  # Querying A record for domain
+        DNSQuery(qname=domain, rdtype="A",want_dnssec=True),  # Querying A record for domain
         dns_server
         # DNSFlags.PdmMetric,  # Requesting PDM (Performance Diagnostic Metrics) option
     )
 
     # Check if a response was received
     if result:
-        print(f"Latency: {result.latency_ns} ns")  # Print query response latency
-        print(result.response.answer)  # Print DNS response
+        print(f"Latency: {result.latency_ns} ns")
+        for rrset in result.response.answer:
+            print(rrset)
+            if rrset.rdtype == dns.rdatatype.RRSIG:
+                print("✅ RRSIG record found")
+        for rrset in result.response.additional:
+            if rrset.rdtype == dns.rdatatype.DNSKEY:
+                print("✅ DNSKEY record found")
     else:
-        print("Failed to get a response.")  # Indicate query failure
+        print("Failed to receive a response.")
 
     # Process additional DNS parameters if PDM option is present
     if result.additional_params:

@@ -11,27 +11,22 @@ This project sends raw DNS queries and measures latency, optionally capturing di
 | `measuredns.c` | C code that sends DNS packets, measures latency, and adds PDM if enabled |
 | `c_interface.py` | Connects Python with the C code using `ctypes` |
 | `dns_packet.py` | Builds DNS query packets using `dnspython` |
-| `measure_dns.py` | Main logic to send queries and process results |
 
 ---
 
 ## Data Flow
 
-1. `measure_dns.py` defines a `DNSQuery` and calls `send_dns_query(...)`
-2. `dns_packet.py` builds the raw DNS packet (wire format)
-3. `c_interface.py` loads `measuredns.so` and sends the packet using `query_dns(...)`
-4. `measuredns.c` sends the query over a socket, optionally adds PDM, and measures latency
-5. Response and optional diagnostics are returned to Python
-6. The response is parsed and returned as a `DNSResult`
+1. `dns_packet.py` builds the raw DNS packet (wire format)
+2. `c_interface.py` loads `measuredns.so` and sends the packet using `query_dns(...)`
+3. `measuredns.c` sends the query over a socket, optionally adds PDM, and measures latency
+4. Response and optional diagnostics are returned to Python
+5. The response is parsed and returned as a `DNSResult`
 
 ---
 
 ### Flow Diagram
 
 ```text
-[ measure_dns.py ]
-        │
-        ▼
 [ dns_packet.py ] → Builds DNS packet
         │
         ▼
@@ -56,8 +51,8 @@ Precise Latency measurements
 2. This file executes the `send_dns_query` function the sned the query.
 3. We can also run the `sample_dos` file to send a bunch of queries at a time to the same dns server.  
 ```bash
-   $python3 -m sample.py
-   $python3 -m sample_dos.py
+   $python -m sample.py
+   $python -m sample_dos.py
 ```
 ## Expected Output
 1. By running the `sample.py` file the user should be able to see the following output.

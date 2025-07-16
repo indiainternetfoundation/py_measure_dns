@@ -18,15 +18,13 @@ if __name__ == "__main__":
         ("testprotocol.in", "NS"),
         ("testprotocol.in", "AAAA"),
     ]
-
     qname_rdata_choices = random.choices(qname_type_list, k=N)
-
     # Define the DNS server to query (IPv6 addresses of authoritative nameservers)
     # dns_server = "2406:da1a:8e8:e863:ab7a:cb7e:2cf9:dc78"  # ns1.testprotocol.in
     # Other available nameservers (commented out)
-    # dns_server = "2406:da1a:8e8:e8cb:97fe:3833:8668:54ad" # ns2.testprotocol.in
+    dns_server = "2406:da1a:8e8:e8cb:97fe:3833:8668:54ad" # ns2.testprotocol.in
     # dns_server = "2406:da18:c78:2b8:a93c:708c:4fc7:f75d" # ns3.testprotocol.in
-    dns_server = "13.127.175.92"  # ns4.testprotocol.in
+    # dns_server = "13.127.175.92"  # ns4.testprotocol.in
     # dns_server = "65.0.92.216" # ns2.testprotocol.in (IPv4)
     # dns_server = "13.127.175.92" # ns1.testprotocol.in (IPv4)
     query_list = []

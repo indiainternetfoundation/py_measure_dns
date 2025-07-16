@@ -20,6 +20,7 @@ nav:
     - API References: api.md
     - Contributing: contributing.md
     - License: license.md
+    - DNSSEC : DNSSEC.md
   - Examples: 
     - Index: examples/index.md
 

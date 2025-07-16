@@ -79,7 +79,7 @@ class DNSQuery:
     rdtype: typing.Union[dns.rdatatype.RdataType, str]
     rdclass: typing.Union[dns.rdataclass.RdataClass, str] = RdataClass.IN
     use_edns: typing.Union[int, bool, None] = None
-    want_dnssec: bool = False
+    want_dnssec: bool = True
     ednsflags: typing.Union[int, None] = None
     payload: typing.Union[int, None] = None
     request_payload: typing.Union[int, None] = None
