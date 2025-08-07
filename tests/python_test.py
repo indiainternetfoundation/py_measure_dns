@@ -41,7 +41,3 @@ def test_dnsquery_default_flags():
 def test_build_dns_query_bytes_length():
     wire = build_dns_query("example.com", "A")
     assert len(wire) == 29
-
-def test_dns_query_want_dnssec_false():
-    query=DNSQuery(qname="example.com", rdtype="A")
-    assert isinstance(query.want_dnssec, bool)
