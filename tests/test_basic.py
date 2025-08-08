@@ -23,9 +23,11 @@ def test_send_dns_query_success():
     assert any(rr.rdtype == A for rr in result.response.answer)
     
 def test_send_dns_query_invalid_domain():
-    with pytest.raises(Exception):
-        query = DNSQuery(qname="nonexistentdomain.abcxyz", rdtype="A")
-        send_dns_query(query, TEST_DNS_SERVER)
+    query = DNSQuery(qname="nonexistentdomain.abcxyz", rdtype="A")
+    result = send_dns_query(query, TEST_DNS_SERVER)
+    assert result is not None
+    assert result.latency_ns > 0
+    assert len(result.response.answer) == 0
 
 # def test_send_dns_query_invalid_server():
 #     query = DNSQuery(qname="example.com", rdtype="A")
