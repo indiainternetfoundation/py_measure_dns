@@ -1,26 +1,26 @@
-# import pytest
-# from dns.rdatatype import A
+import pytest
+from dns.rdatatype import A
 
-# from measure_dns import DNSQuery, send_dns_query
+from measure_dns import DNSQuery, send_dns_query
 
-# # Mock DNS server — replace with a controlled test server if needed
-# TEST_DNS_SERVER = "8.8.8.8"  # or use a mock server / local resolver
-
-
-# def test_dns_query_construction():
-#     qname = "example.com"
-#     query = DNSQuery(qname=qname, rdtype="A")
-#     assert query.qname == qname
-#     assert query.rdtype == "A"
+# Mock DNS server — replace with a controlled test server if needed
+TEST_DNS_SERVER = "8.8.8.8"  # or use a mock server / local resolver
 
 
-# def test_send_dns_query_success():
-#     query = DNSQuery(qname="example.com", rdtype="A")
-#     result = send_dns_query(query, TEST_DNS_SERVER)
-#     assert result is not None
-#     assert result.latency_ns > 0
-#     assert hasattr(result.response, "answer")
-#     assert any(rr.rdtype == A for rr in result.response.answer)
+def test_dns_query_construction():
+    qname = "example.com"
+    query = DNSQuery(qname=qname, rdtype="A")
+    assert query.qname == qname
+    assert query.rdtype == "A"
+
+
+def test_send_dns_query_success():
+    query = DNSQuery(qname="example.com", rdtype="A")
+    result = send_dns_query(query, TEST_DNS_SERVER)
+    assert result is not None
+    assert result.latency_ns > 0
+    assert hasattr(result.response, "answer")
+    assert any(rr.rdtype == A for rr in result.response.answer)
 
 
 # # def test_send_dns_query_invalid_domain():
