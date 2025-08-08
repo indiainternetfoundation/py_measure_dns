@@ -20,10 +20,10 @@ if __name__ == "__main__":
     # Define the DNS server to query (IPv6 addresses of authoritative nameservers)
     # dns_server = "13.127.175.92"  # ns1.testprotocol.in
     # Other available nameservers (commented out)
-    dns_server = "2406:da1a:8e8:e8cb:97fe:3833:8668:54ad" # ns2.testprotocol.in
+    # dns_server = "2406:da1a:8e8:e8cb:97fe:3833:8668:54ad" # ns2.testprotocol.in
     # dns_server = "2406:da18:c78:2b8:a93c:708c:4fc7:f75d" # ns3.testprotocol.in
     # dns_server = "2406:da18:c78:219:22a5:8271:5f0d:780b" # ns4.testprotocol.in
-    # dns_server = "65.0.92.216" # ns2.testprotocol.in (IPv4)
+    dns_server = "65.0.92.216" # ns2.testprotocol.in (IPv4)
     # dns_server = "8.8.8.8" # ns1.testprotocol.in (IPv4)
 
     # Send a DNS query to the specified server, requesting an A record
